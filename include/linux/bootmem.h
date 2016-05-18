@@ -28,11 +28,11 @@ extern unsigned long saved_max_pfn;
  * memory pages (including holes) on the node.
  */
 typedef struct bootmem_data {
-	unsigned long node_boot_start;
-	unsigned long node_low_pfn;
-	void *node_bootmem_map;
-	unsigned long last_offset;
-	unsigned long last_pos;
+	unsigned long node_boot_start; /* The starting physical address of the represented block */
+	unsigned long node_low_pfn; /* The end physical address, in other words, the end of the ZONE_NORMAL */
+	void *node_bootmem_map; /* The location of the bitmap representing allocated or free pages with each bit */
+	unsigned long last_offset; /* The offset within the page of the end of the last allocation. If 0, the page used is full */
+	unsigned long last_pos; /* The PFN of the page used with the last location */
 	unsigned long last_success;	/* Previous allocation point.  To speed
 					 * up searching */
 	struct list_head list;

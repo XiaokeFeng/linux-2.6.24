@@ -55,6 +55,7 @@ static void __init link_bootmem(bootmem_data_t *bdata)
 {
 	bootmem_data_t *ent;
 
+    // bdata_list, which is static, is the head of the boot memory list
 	if (list_empty(&bdata_list)) {
 		list_add(&bdata->list, &bdata_list);
 		return;
@@ -94,7 +95,8 @@ static unsigned long __init init_bootmem_core(pg_data_t *pgdat,
 	bdata->node_bootmem_map = phys_to_virt(PFN_PHYS(mapstart));
 	bdata->node_boot_start = PFN_PHYS(start);
 	bdata->node_low_pfn = end;
-	link_bootmem(bdata);
+	// insert bdata into the list.
+    link_bootmem(bdata);
 
 	/*
 	 * Initially all pages are reserved - setup_arch() has to
@@ -226,6 +228,14 @@ __alloc_bootmem_core(struct bootmem_data *bdata, unsigned long size,
 	areasize = (size + PAGE_SIZE-1) / PAGE_SIZE;
 	incr = align >> PAGE_SHIFT ? : 1;
 
+    /*
+     * The clever part, and the main bluk of the function, dealing with deciding
+     * if this new allocation can be merged with the previous one. It may be merged
+     * if the following conditions hold:
+     * * The page used for the the previous allocation (last_pos) is adjacent to the page found for this allocation;
+     * * The previous page has some free space in it (offset != 0);
+     * * The alignment is less than PAGE_SIZE.
+     */
 restart_scan:
 	for (i = preferred; i < eidx; i += incr) {
 		unsigned long j;

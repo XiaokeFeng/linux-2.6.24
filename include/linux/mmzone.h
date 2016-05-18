@@ -176,7 +176,14 @@ enum zone_type {
 	 */
 	ZONE_HIGHMEM,
 #endif
+    /*
+     * @TODO: need more description.
+     * 伪内存域，在防止物理内存碎片的机制中需要
+     */
 	ZONE_MOVABLE,
+    /*
+     * MAX_NR_ZONES 充当结束标记，在内核想要迭代系统中的所有内存域时，会用到这个常量
+     */
 	MAX_NR_ZONES
 };
 
@@ -213,6 +220,12 @@ enum zone_type {
 
 struct zone {
 	/* Fields commonly accessed by the page allocator */
+    /*
+     * 所谓的watermask
+     * 空闲page数目高于pages_high，则内存域的状态是理想的
+     * 空闲page数目低于pages_low，则内核开始将page换出到disk
+     * 空闲page数目低于pages_min，page回收压力会增大 @TODO: need more description
+     */
 	unsigned long		pages_min, pages_low, pages_high;
 	/*
 	 * We don't know if the memory that we're going to allocate will be freeable
@@ -222,6 +235,9 @@ struct zone {
 	 * on the higher zones). This array is recalculated at runtime if the
 	 * sysctl_lowmem_reserve_ratio sysctl changes.
 	 */
+    /*
+     * 为各个域预留若干pages，保证一些关键性内存分配一定会正确
+     */
 	unsigned long		lowmem_reserve[MAX_NR_ZONES];
 
 #ifdef CONFIG_NUMA
@@ -231,6 +247,11 @@ struct zone {
 	 */
 	unsigned long		min_unmapped_pages;
 	unsigned long		min_slab_pages;
+    /*
+     * 用于实现每个CPU的热/冷pages列表
+     * hot page：page在高速缓存中
+     * cold page：page不在高速缓存中
+     */
 	struct per_cpu_pageset	*pageset[NR_CPUS];
 #else
 	struct per_cpu_pageset	pageset[NR_CPUS];
@@ -243,6 +264,10 @@ struct zone {
 	/* see spanned/present_pages for more description */
 	seqlock_t		span_seqlock;
 #endif
+    /*
+     * free_area用于实现伙伴系统
+     * 每个数组元素指向了一个固定大小（2 ^ x）的连续内存区list
+     */
 	struct free_area	free_area[MAX_ORDER];
 
 #ifndef CONFIG_SPARSEMEM
@@ -258,11 +283,21 @@ struct zone {
 
 	/* Fields commonly accessed by the page reclaim scanner */
 	spinlock_t		lru_lock;	
-	struct list_head	active_list;
+	/*
+     * active：page被频繁访问
+     * inactive：相反
+     */
+    struct list_head	active_list;
 	struct list_head	inactive_list;
+    /*
+     * 回收内存时，需要扫描的active和inactive pages的数目
+     */
 	unsigned long		nr_scan_active;
 	unsigned long		nr_scan_inactive;
 	unsigned long		pages_scanned;	   /* since last reclaim */
+    /*
+     * goto enum zone_flags_t;
+     */
 	unsigned long		flags;		   /* zone flags, see below */
 
 	/* Zone statistics */
@@ -342,9 +377,9 @@ struct zone {
 } ____cacheline_internodealigned_in_smp;
 
 typedef enum {
-	ZONE_ALL_UNRECLAIMABLE,		/* all pages pinned */
-	ZONE_RECLAIM_LOCKED,		/* prevents concurrent reclaim */
-	ZONE_OOM_LOCKED,		/* zone is in OOM killer zonelist */
+	ZONE_ALL_UNRECLAIMABLE,		/* all pages pinned 所有的页都被钉住了 */
+	ZONE_RECLAIM_LOCKED,		/* prevents concurrent reclaim 防止并发回收 */
+	ZONE_OOM_LOCKED,		/* zone is in OOM killer zonelist 内存域即可被回收 */
 } zone_flags_t;
 
 static inline void zone_set_flag(struct zone *zone, zone_flags_t flag)
@@ -529,13 +564,38 @@ extern struct page *mem_map;
  * per-zone basis.
  */
 struct bootmem_data;
+/*
+ * pglist_data 用于表示内存结点
+ * 在NUMA中，每个CPU连接的内存块儿会有不同的pglist_data
+ * 在UMA中，则只需要一个pglist_data
+ */
+/*
+ * <nodemask.h>
+ * enum node_states;
+ * 当结点多于一个的时候，会维护这个bitmap，用以提供各个结点的状态信息
+ */
 typedef struct pglist_data {
+    /*
+     * node_zones共有MAX_NR_ZONES个域
+     * 每个域指向不同的内存域ZONE_DMA, ZONE_NORMAL OR ZONE_HIGHMEM
+     */
 	struct zone node_zones[MAX_NR_ZONES];
-	struct zonelist node_zonelists[MAX_ZONELISTS];
-	int nr_zones;
+	/*
+     * node_zonelist是node_zones的备用列表
+     * 当一个结点的内存用尽的时候
+     */
+    struct zonelist node_zonelists[MAX_ZONELISTS];
+	int nr_zones; /* 等同于MAX_NR_ZONES */
 #ifdef CONFIG_FLAT_NODE_MEM_MAP
+    /*
+     * node_mem_map包含了本结点所有的页
+     * ！！！不管是哪个zone的page，都会放到这里面
+     */
 	struct page *node_mem_map;
 #endif
+    /*
+     * bdata用于表示内核初始化的时候使用的内存
+     */
 	struct bootmem_data *bdata;
 #ifdef CONFIG_MEMORY_HOTPLUG
 	/*
@@ -547,12 +607,24 @@ typedef struct pglist_data {
 	 */
 	spinlock_t node_size_lock;
 #endif
+    /*
+     * node_start_pfn是NUMA结点的第一页逻辑编号，在UMA中永远是0
+     * 系统中所有结点的页都是一次编号的，且全局唯一（不只是结点内唯一）
+     */
 	unsigned long node_start_pfn;
 	unsigned long node_present_pages; /* total number of physical pages */
 	unsigned long node_spanned_pages; /* total size of physical page
 					     range, including holes */
 	int node_id;
+    /*
+     * @TODO: need more description
+     * 交换守护进程的等待队列
+     * 在将page换出结点时会用到
+     */
 	wait_queue_head_t kswapd_wait;
+    /*
+     * 指向负责该结点的交换守护进程的task_struct
+     */
 	struct task_struct *kswapd;
 	int kswapd_max_order;
 } pg_data_t;
