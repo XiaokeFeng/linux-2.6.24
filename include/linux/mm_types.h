@@ -33,11 +33,24 @@ typedef unsigned long mm_counter_t;
  * a page, though if it is a pagecache page, rmap structures can tell us
  * who is mapping it.
  */
+/*
+ * 此结构应该尽可能的小，sizeof(struct page)
+ * 内存越大，page的数目越多，如果结构过大，page的实例则会暴涨
+ */
 struct page {
+    /*
+     * 与体系结构无关的page属性
+     */
 	unsigned long flags;		/* Atomic flags, some possibly
 					 * updated asynchronously */
-	atomic_t _count;		/* Usage count, see below. */
+	/*
+     * 当前page的引用计数
+     */
+    atomic_t _count;		/* Usage count, see below. */
 	union {
+        /*
+         * PTEs中有多少指向本page
+         */
 		atomic_t _mapcount;	/* Count of ptes mapped in mms,
 					 * to show when page is mapped
 					 * & limit reverse map searches.

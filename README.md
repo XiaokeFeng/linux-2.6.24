@@ -1,5 +1,5 @@
 # Concept for "Professional Linux Architecture"
-# by fengxiaoke at 2016-05-19 14:20
+> by fengxiaoke at 2016-05-19 14:20
 
 ## Content
 * [进程管理](#process)
@@ -9,12 +9,16 @@
     * [内存域](#zone)
     * [内存域水印](#watermask)
     * [冷热页](#hot_cold_page)
+    * [页帧](#page)
 * [文件系统](#file)
 * [网络](#network)
 
 <h2 id="process">进程管理</h2>
 
 > coming soon ...
+> * PID
+> * fork/clone
+> * process schedule
 
 <h2 id="memory">内存管理</h2>
 
@@ -38,6 +42,13 @@
 * lowmem_reserve是什么？
 
 <h3 id="hot_cold_page">冷热页</h3>
+* `struct per_cpu_pageset`
+* batch？
+
+<h3 id="page">页帧</h3>
+* `struct page`
+* 为什么page越小越好？
+* 内核的一些模块会用到page中的一部分，但是剩余部分仅对其他模块有用，如何解决这种资源的利用问题？
 
 <h2 id="file">文件系统</h2>
 
