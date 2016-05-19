@@ -301,6 +301,9 @@ struct zone {
 	unsigned long		flags;		   /* zone flags, see below */
 
 	/* Zone statistics */
+    /*
+     * 当前结点内存域的统计信息
+     */
 	atomic_long_t		vm_stat[NR_VM_ZONE_STAT_ITEMS];
 
 	/*
@@ -316,6 +319,10 @@ struct zone {
 	 * Access to both this field is quite racy even on uniprocessor.  But
 	 * it is expected to average out OK.
 	 */
+    /*
+     * 用于page回收时的判断
+     * @TODO: need more description
+     */
 	int prev_priority;
 
 
@@ -346,16 +353,20 @@ struct zone {
 	 * primary users of these fields, and in mm/page_alloc.c
 	 * free_area_init_core() performs the initialization of them.
 	 */
+    /*
+     * 直观理解：进程排成一个队列，等待某些条件，在条件为真的时候，内核通知进程恢复工作
+     */
 	wait_queue_head_t	* wait_table;
 	unsigned long		wait_table_hash_nr_entries;
 	unsigned long		wait_table_bits;
 
 	/*
 	 * Discontig memory support fields.
+     * 当前内存域的父结点实例
 	 */
 	struct pglist_data	*zone_pgdat;
 	/* zone_start_pfn == zone_start_paddr >> PAGE_SHIFT */
-	unsigned long		zone_start_pfn;
+	unsigned long		zone_start_pfn; /* 内存域第一个page的索引号 */
 
 	/*
 	 * zone_start_pfn, spanned_pages and present_pages are all

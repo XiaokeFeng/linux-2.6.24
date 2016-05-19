@@ -115,6 +115,10 @@ static char * const zone_names[MAX_NR_ZONES] = {
 	 "Movable",
 };
 
+/*
+ * 内核为关键性分配保留的内存空间的最小值
+ * 由init_per_zone_pages_min()进行确定
+ */
 int min_free_kbytes = 1024;
 
 unsigned long __meminitdata nr_kernel_pages;
@@ -4147,6 +4151,11 @@ void setup_per_zone_pages_min(void)
  * 4096MB:	8192k
  * 8192MB:	11584k
  * 16384MB:	16384k
+ */
+/*
+ * 设置预留内存空间最小值
+ * 设置watermask
+ * 设置各个域的保留内存pages
  */
 static int __init init_per_zone_pages_min(void)
 {
