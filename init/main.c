@@ -533,7 +533,8 @@ asmlinkage void __init start_kernel(void)
 	page_address_init();
 	printk(KERN_NOTICE);
 	printk(linux_banner);
-	setup_arch(&command_line);
+	// 特定于体系结构的设置函数
+    setup_arch(&command_line);
 	setup_command_line(command_line);
 	unwind_setup();
 	setup_per_cpu_areas();

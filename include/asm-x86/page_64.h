@@ -4,9 +4,9 @@
 #include <linux/const.h>
 
 /* PAGE_SHIFT determines the page size */
-#define PAGE_SHIFT	12
+#define PAGE_SHIFT	12 /* page为 0 ~ 2 ^ 12 - 1 */
 #define PAGE_SIZE	(_AC(1,UL) << PAGE_SHIFT)
-#define PAGE_MASK	(~(PAGE_SIZE-1))
+#define PAGE_MASK	(~(PAGE_SIZE-1)) /* page的掩码，即高20bit or 高52bit的值 */
 #define PHYSICAL_PAGE_MASK	(~(PAGE_SIZE-1) & __PHYSICAL_MASK)
 
 #define THREAD_ORDER 1 
@@ -53,6 +53,10 @@ void copy_page(void *, void *);
 #define __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
 /*
  * These are used to make use of C type-checking..
+ */
+/*
+ * 使用struct而不是基本类型，以确保页表项的内容只能由相关的辅助函数处理，
+ * 决不能直接访问
  */
 typedef struct { unsigned long pte; } pte_t;
 typedef struct { unsigned long pmd; } pmd_t;

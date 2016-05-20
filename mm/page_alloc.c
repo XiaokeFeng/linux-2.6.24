@@ -3965,6 +3965,9 @@ void __init set_dma_reserve(unsigned long new_dma_reserve)
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
 static bootmem_data_t contig_bootmem_data;
+/*
+ * contig_page_data管理所有的内存
+ */
 struct pglist_data contig_page_data = { .bdata = &contig_bootmem_data };
 
 EXPORT_SYMBOL(contig_page_data);

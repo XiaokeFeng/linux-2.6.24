@@ -59,6 +59,10 @@ struct page {
 	};
 	union {
 	    struct {
+            /*
+             * private指向了“私有”数据，虚拟内存管理会忽略本指针
+             * 大多数情况，private被用于将page和数据缓冲区关联起来
+             */
 		unsigned long private;		/* Mapping-private opaque data:
 					 	 * usually used for buffer_heads
 						 * if PagePrivate set; used for
@@ -66,7 +70,12 @@ struct page {
 						 * indicates order in the buddy
 						 * system if PG_buddy is set.
 						 */
-		struct address_space *mapping;	/* If low bit clear, points to
+		/*
+         * 当前page所在的地址空间
+         * 本结构总是以sizeof(long)对齐，因此mapping指针最低位总是0
+         * 当最低位被设置为1时，mapping指向了匿名内存区结构体anon_vma
+         */
+        struct address_space *mapping;	/* If low bit clear, points to
 						 * inode address_space, or NULL.
 						 * If page mapped as anonymous
 						 * memory, low bit is set, and
@@ -78,9 +87,16 @@ struct page {
 	    spinlock_t ptl;
 #endif
 	    struct kmem_cache *slab;	/* SLUB: Pointer to slab */
-	    struct page *first_page;	/* Compound tail pages */
+	    /*
+         * 复合页：内核可以将多个相邻的page合并为较大的page
+         */
+        struct page *first_page;	/* Compound tail pages */
 	};
 	union {
+        /*
+         * 当前page在映射内部的偏移量
+         * 对应 struct address_space* mapping
+         */
 		pgoff_t index;		/* Our offset within mapping. */
 		void *freelist;		/* SLUB: freelist req. slab lock */
 	};
@@ -98,6 +114,9 @@ struct page {
 	 * WANT_PAGE_VIRTUAL in asm/page.h
 	 */
 #if defined(WANT_PAGE_VIRTUAL)
+    /*
+     * 存储highmem's page的虚拟地址
+     */
 	void *virtual;			/* Kernel virtual address (NULL if
 					   not kmapped, ie. highmem) */
 #endif /* WANT_PAGE_VIRTUAL */
